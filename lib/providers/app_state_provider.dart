@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 
 class AppStateProvider with ChangeNotifier {
   String _deviceId = '';
@@ -17,17 +16,20 @@ class AppStateProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       String? savedDeviceId = prefs.getString('device_id');
-      
+
       if (savedDeviceId == null || savedDeviceId.isEmpty) {
-        savedDeviceId = const Uuid().v4();
+        final random = DateTime.now().millisecondsSinceEpoch;
+        final deviceNum = (random % 900000) + 100000;
+        savedDeviceId = deviceNum.toString();
         await prefs.setString('device_id', savedDeviceId);
       }
-      
+
       _deviceId = savedDeviceId;
       notifyListeners();
     } catch (e) {
-      // 如果获取失败，生成临时ID
-      _deviceId = const Uuid().v4();
+      final random = DateTime.now().millisecondsSinceEpoch;
+      final deviceNum = (random % 900000) + 100000;
+      _deviceId = deviceNum.toString();
       notifyListeners();
     }
   }
@@ -40,14 +42,12 @@ class AppStateProvider with ChangeNotifier {
   Future<void> regenerateDeviceId() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final newDeviceId = const Uuid().v4();
+      final random = DateTime.now().millisecondsSinceEpoch;
+      final deviceNum = (random % 900000) + 100000;
+      final newDeviceId = deviceNum.toString();
       await prefs.setString('device_id', newDeviceId);
       _deviceId = newDeviceId;
       notifyListeners();
-    } catch (e) {
-      // 处理错误
-    }
+    } catch (e) {}
   }
 }
-
-

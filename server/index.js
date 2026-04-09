@@ -13,22 +13,29 @@ wss.on('connection', (ws, req) => {
   const deviceId = url.searchParams.get('id') || 'unknown';
   const targetId = url.searchParams.get('target');
   
-  console.log(`新连接: role=${role}, id=${deviceId}, target=${targetId}`);
+  console.log('========== 新连接 ==========');
+  console.log('URL:', req.url);
+  console.log('role:', role);
+  console.log('deviceId:', deviceId);
+  console.log('targetId:', targetId);
+  console.log('在线: 被控端=' + hosts.size + ', 控制端=' + clients.size);
   
   if (role === 'host') {
     hosts.set(deviceId, ws);
-    console.log(`被控端已连接: ${deviceId}, 当前在线: ${hosts.size}`);
+    console.log('被控端已连接: ' + deviceId);
+    console.log('当前在线被控端列表:', Array.from(hosts.keys()));
     
     ws.on('message', (data) => {
       const client = clients.get(deviceId);
       if (client && client.readyState === WebSocket.OPEN) {
         client.send(data);
+        console.log('[host->client] 转发屏幕帧: ' + data.length + ' bytes');
       }
     });
     
     ws.on('close', () => {
       hosts.delete(deviceId);
-      console.log(`被控端断开: ${deviceId}`);
+      console.log('被控端断开: ' + deviceId);
       const client = clients.get(deviceId);
       if (client && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ type: 'disconnect', reason: 'host_disconnected' }));
@@ -36,24 +43,30 @@ wss.on('connection', (ws, req) => {
       clients.delete(deviceId);
     });
   } else if (role === 'client') {
+    console.log('控制端尝试连接，目标: ' + targetId);
+    console.log('在线被控端:', Array.from(hosts.keys()));
+    
     if (targetId && hosts.has(targetId)) {
       const host = hosts.get(targetId);
       clients.set(targetId, ws);
-      console.log(`控制端已连接，绑定到被控端: ${targetId}`);
+      console.log('控制端已连接，绑定到被控端: ' + targetId);
       
       ws.on('message', (data) => {
         if (host && host.readyState === WebSocket.OPEN) {
           host.send(data);
+          console.log('[client->host] 转发控制指令: ' + data.toString().substring(0, 100));
         }
       });
       
       ws.on('close', () => {
         clients.delete(targetId);
-        console.log(`控制端断开，解除与 ${targetId} 的绑定`);
+        console.log('控制端断开，解除与 ' + targetId + ' 的绑定');
       });
       
       ws.send(JSON.stringify({ type: 'connected', targetId: targetId }));
+      console.log('已发送连接成功消息给控制端');
     } else {
+      console.log('错误：目标设备不存在或未在线');
       ws.send(JSON.stringify({ type: 'error', message: '目标设备不存在或未在线' }));
       ws.close();
     }
@@ -65,11 +78,12 @@ wss.on('connection', (ws, req) => {
 });
 
 setInterval(() => {
-  console.log(`当前在线: 被控端=${hosts.size}, 控制端=${clients.size}`);
+  console.log('--- 心跳检测 --- 在线: 被控端=' + hosts.size + ', 控制端=' + clients.size);
   for (const [id, ws] of hosts) {
     if (ws.readyState !== WebSocket.OPEN) {
       hosts.delete(id);
       clients.delete(id);
+      console.log('清理断开的被控端: ' + id);
     }
   }
   for (const [id, ws] of clients) {
