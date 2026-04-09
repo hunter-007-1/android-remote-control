@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Android远程控制</string>
+    <string name="accessibility_service_description">此服务用于远程控制功能，允许通过手势模拟触摸操作。需要此权限才能在被控设备上执行点击、滑动等操作。</string>
+</resources>
+
+
+

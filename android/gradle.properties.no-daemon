@@ -1,0 +1,14 @@
+# 备选配置：完全禁用 daemon（如果 daemon 仍有问题，可以替换 gradle.properties）
+# JVM 参数
+org.gradle.jvmargs=-Xmx2048M -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8
+android.useAndroidX=true
+android.enableJetifier=true
+
+# 禁用 Gradle 守护进程（如果 daemon 连接有问题）
+org.gradle.daemon=false
+org.gradle.parallel=false
+org.gradle.caching=true
+
+# 增加超时时间
+org.gradle.wrapper.timeout=300000
+

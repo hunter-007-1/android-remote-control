@@ -1,0 +1,61 @@
+pluginManagement {
+    def flutterSdkPath = {
+        def properties = new Properties()
+        def localPropertiesFile = file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.withInputStream { properties.load(it) }
+        }
+        def flutterSdkPath = properties.getProperty("flutter.sdk")
+        if (flutterSdkPath == null) {
+            // 尝试从环境变量获取
+            def envFlutter = System.getenv("FLUTTER_ROOT")
+            if (envFlutter != null) {
+                return envFlutter
+            }
+            // 尝试常见路径
+            def commonPaths = [
+                "C:\\flutter",
+                "C:\\src\\flutter",
+                System.getProperty("user.home") + "\\flutter",
+                System.getProperty("user.home") + "\\AppData\\Local\\flutter"
+            ]
+            for (def path : commonPaths) {
+                def flutterFile = new File(path, "bin\\flutter.bat")
+                if (flutterFile.exists()) {
+                    // 自动写入到 local.properties
+                    def localProps = new Properties()
+                    if (localPropertiesFile.exists()) {
+                        localPropertiesFile.withInputStream { localProps.load(it) }
+                    }
+                    localProps.setProperty("flutter.sdk", path)
+                    localPropertiesFile.withWriter { writer ->
+                        localProps.store(writer, null)
+                    }
+                    return path
+                }
+            }
+            // 如果都找不到，提供一个友好的错误信息
+            throw new GradleException("Flutter SDK not found. Please:\n1. Install Flutter SDK from https://flutter.dev\n2. Or set flutter.sdk in android/local.properties\n3. Or use Android Studio which will auto-detect Flutter SDK")
+        }
+        return flutterSdkPath
+    }()
+
+    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+    // 升级到 Flutter 要求的最低版本 8.6.0
+    id "com.android.application" version "8.6.0" apply false
+    id "org.jetbrains.kotlin.android" version "2.1.0" apply false
+}
+
+include ":app"
+
+

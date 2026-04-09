@@ -1,0 +1,10 @@
+## 此文件用于配置 Android 和 Flutter SDK 路径
+## 复制此文件为 local.properties 并填入正确的路径
+
+# Flutter SDK 路径（Windows 示例）
+# flutter.sdk=C:\\flutter
+
+# Android SDK 路径（通常 Android Studio 会自动配置）
+# sdk.dir=C:\\Users\\YourUsername\\AppData\\Local\\Android\\Sdk
+
+

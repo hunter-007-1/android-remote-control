@@ -1,0 +1,12 @@
+{
+  "name": "remote-control-relay",
+  "version": "1.0.0",
+  "description": "Android远程控制中转服务器",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}
