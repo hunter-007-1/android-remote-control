@@ -52,7 +52,7 @@ class _ControlledScreenState extends State<ControlledScreen> {
       await _remoteControlService.stop();
       final provider = Provider.of<AppStateProvider>(context, listen: false);
       provider.setServiceRunning(false);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('服务已停止'),
@@ -62,8 +62,9 @@ class _ControlledScreenState extends State<ControlledScreen> {
     } else {
       // 【修复】启动服务前检查无障碍服务是否开启
       final a11yStatus = await InputService.checkAccessibilityService();
-      final isA11yEnabled = a11yStatus['enabled'] == true || a11yStatus['serviceAvailable'] == true;
-      
+      final isA11yEnabled = a11yStatus['enabled'] == true ||
+          a11yStatus['serviceAvailable'] == true;
+
       if (!isA11yEnabled) {
         // 无障碍服务未开启，显示引导对话框
         _showAccessibilityServiceGuide();
@@ -76,7 +77,7 @@ class _ControlledScreenState extends State<ControlledScreen> {
       });
 
       final success = await _remoteControlService.start();
-      
+
       setState(() {
         _isStarting = false;
       });
@@ -84,12 +85,12 @@ class _ControlledScreenState extends State<ControlledScreen> {
       if (success) {
         final provider = Provider.of<AppStateProvider>(context, listen: false);
         provider.setServiceRunning(true);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('服务已启动\nIP: $_localIP:${_remoteControlService.serverPort}'),
+          const SnackBar(
+            content: Text('服务已启动，连接至云端服务器'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
+            duration: Duration(seconds: 3),
           ),
         );
       } else {
@@ -241,7 +242,9 @@ class _ControlledScreenState extends State<ControlledScreen> {
                         height: 12,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _remoteControlService.isRunning ? Colors.green : Colors.red,
+                          color: _remoteControlService.isRunning
+                              ? Colors.green
+                              : Colors.red,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -250,7 +253,9 @@ class _ControlledScreenState extends State<ControlledScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: _remoteControlService.isRunning ? Colors.green : Colors.red,
+                          color: _remoteControlService.isRunning
+                              ? Colors.green
+                              : Colors.red,
                         ),
                       ),
                     ],
@@ -273,7 +278,8 @@ class _ControlledScreenState extends State<ControlledScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.videocam, size: 16, color: Colors.grey),
+                        const Icon(Icons.videocam,
+                            size: 16, color: Colors.grey),
                         const SizedBox(width: 8),
                         Text(
                           '已发送帧数: ${_remoteControlService.framesSent}',
@@ -292,7 +298,9 @@ class _ControlledScreenState extends State<ControlledScreen> {
                     child: ElevatedButton(
                       onPressed: _isStarting ? null : _toggleService,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _remoteControlService.isRunning ? Colors.red : Colors.green,
+                        backgroundColor: _remoteControlService.isRunning
+                            ? Colors.red
+                            : Colors.green,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -307,7 +315,8 @@ class _ControlledScreenState extends State<ControlledScreen> {
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
                                   ),
                                 ),
                                 SizedBox(width: 8),
@@ -317,9 +326,13 @@ class _ControlledScreenState extends State<ControlledScreen> {
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(_remoteControlService.isRunning ? Icons.stop : Icons.play_arrow),
+                                Icon(_remoteControlService.isRunning
+                                    ? Icons.stop
+                                    : Icons.play_arrow),
                                 const SizedBox(width: 8),
-                                Text(_remoteControlService.isRunning ? '停止服务' : '启动服务'),
+                                Text(_remoteControlService.isRunning
+                                    ? '停止服务'
+                                    : '启动服务'),
                               ],
                             ),
                     ),
@@ -338,51 +351,36 @@ class _ControlledScreenState extends State<ControlledScreen> {
                 child: Column(
                   children: [
                     const Icon(
-                      Icons.info_outline,
+                      Icons.cloud_done,
                       size: 48,
                       color: Colors.blue,
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      '服务运行中',
+                      '云端服务运行中',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    if (_localIP != null) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.wifi, size: 16, color: Colors.blue),
-                          const SizedBox(width: 8),
-                          SelectableText(
-                            '$_localIP:${_remoteControlService.serverPort}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'monospace',
-                            ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.wifi, size: 16, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Text(
+                          _remoteControlService.isWebSocketConnected
+                              ? '已连接服务器'
+                              : '连接中...',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'monospace',
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.copy, size: 16),
-                            onPressed: () {
-                              Clipboard.setData(ClipboardData(
-                                text: '$_localIP:${_remoteControlService.serverPort}',
-                              ));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('地址已复制'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       _remoteControlService.connectedClients > 0
                           ? '控制端已连接'
@@ -390,6 +388,14 @@ class _ControlledScreenState extends State<ControlledScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '服务器: wss://invigorating-embrace.up.railway.app',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
                       ),
                     ),
                   ],
@@ -401,4 +407,3 @@ class _ControlledScreenState extends State<ControlledScreen> {
     );
   }
 }
-

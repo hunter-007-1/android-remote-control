@@ -2,8 +2,8 @@ const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ port: 8080 });
 
-let host = null;    // 被控端
-let client = null;  // 控制端
+const hosts = new Map();
+const clients = new Map();
 
 console.log('WebSocket 中转服务器启动，端口: 8080');
 
@@ -11,54 +11,71 @@ wss.on('connection', (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const role = url.searchParams.get('role');
   const deviceId = url.searchParams.get('id') || 'unknown';
+  const targetId = url.searchParams.get('target');
   
-  console.log(`新连接: role=${role}, id=${deviceId}`);
+  console.log(`新连接: role=${role}, id=${deviceId}, target=${targetId}`);
   
   if (role === 'host') {
-    // 被控端
-    host = ws;
-    console.log('被控端已连接');
-  } else if (role === 'client') {
-    // 控制端
-    client = ws;
-    console.log('控制端已连接');
-  }
-  
-  // 转发消息
-  ws.on('message', (data) => {
-    // 广播给另一端
-    if (role === 'host' && client && client.readyState === WebSocket.OPEN) {
-      client.send(data);
-      console.log('转发屏幕帧给控制端');
-    } else if (role === 'client' && host && host.readyState === WebSocket.OPEN) {
-      host.send(data);
-      console.log('转发控制指令给被控端');
-    }
-  });
-  
-  ws.on('close', () => {
-    console.log(`连接断开: role=${role}`);
-    if (role === 'host') {
-      host = null;
-      // 被控端断开，通知控制端
+    hosts.set(deviceId, ws);
+    console.log(`被控端已连接: ${deviceId}, 当前在线: ${hosts.size}`);
+    
+    ws.on('message', (data) => {
+      const client = clients.get(deviceId);
+      if (client && client.readyState === WebSocket.OPEN) {
+        client.send(data);
+      }
+    });
+    
+    ws.on('close', () => {
+      hosts.delete(deviceId);
+      console.log(`被控端断开: ${deviceId}`);
+      const client = clients.get(deviceId);
       if (client && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ type: 'disconnect', reason: 'host_disconnected' }));
       }
+      clients.delete(deviceId);
+    });
+  } else if (role === 'client') {
+    if (targetId && hosts.has(targetId)) {
+      const host = hosts.get(targetId);
+      clients.set(targetId, ws);
+      console.log(`控制端已连接，绑定到被控端: ${targetId}`);
+      
+      ws.on('message', (data) => {
+        if (host && host.readyState === WebSocket.OPEN) {
+          host.send(data);
+        }
+      });
+      
+      ws.on('close', () => {
+        clients.delete(targetId);
+        console.log(`控制端断开，解除与 ${targetId} 的绑定`);
+      });
+      
+      ws.send(JSON.stringify({ type: 'connected', targetId: targetId }));
+    } else {
+      ws.send(JSON.stringify({ type: 'error', message: '目标设备不存在或未在线' }));
+      ws.close();
     }
-    if (role === 'client') {
-      client = null;
-    }
-  });
+  }
   
   ws.on('error', (err) => {
     console.error('WebSocket 错误:', err.message);
   });
 });
 
-// 心跳检测
 setInterval(() => {
-  if (host && host.readyState !== WebSocket.OPEN) host = null;
-  if (client && client.readyState !== WebSocket.OPEN) client = null;
+  for (const [id, ws] of hosts) {
+    if (ws.readyState !== WebSocket.OPEN) {
+      hosts.delete(id);
+      clients.delete(id);
+    }
+  }
+  for (const [id, ws] of clients) {
+    if (ws.readyState !== WebSocket.OPEN) {
+      clients.delete(id);
+    }
+  }
 }, 5000);
 
 console.log('等待连接...');

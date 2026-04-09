@@ -19,9 +19,7 @@ class ControllerScreen extends StatefulWidget {
 }
 
 class _ControllerScreenState extends State<ControllerScreen> {
-  final TextEditingController _ipController = TextEditingController();
-  final TextEditingController _portController =
-      TextEditingController(text: '8888');
+  final TextEditingController _deviceIdController = TextEditingController();
   late ws.WebSocketClient _webSocketClient;
   bool _isConnecting = false;
   Uint8List? _screenData;
@@ -30,6 +28,8 @@ class _ControllerScreenState extends State<ControllerScreen> {
   ws.WebSocketConnectionState _connectionState =
       ws.WebSocketConnectionState.disconnected;
   int _framesReceived = 0;
+
+  String get _serverUrl => 'wss://invigorating-embrace.up.railway.app';
 
   // 视频流中断检测
   Timer? _frameTimeoutTimer;
@@ -136,23 +136,19 @@ class _ControllerScreenState extends State<ControllerScreen> {
     _cancelFrameTimeout();
 
     try {
-      final ip = _ipController.text.trim();
-      final portStr = _portController.text.trim();
+      final targetId = _deviceIdController.text.trim();
 
-      if (ip.isEmpty || portStr.isEmpty) {
-        print('无法自动重连：IP 或端口为空');
+      if (targetId.isEmpty) {
+        print('无法自动重连：设备ID为空');
         _isAutoReconnecting = false;
         return;
       }
 
-      // 先断开当前连接
       await _webSocketClient.disconnect();
 
-      // 等待一小段时间
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // 重新连接
-      final url = 'ws://$ip:$portStr';
+      final url = '$_serverUrl/?role=client&target=$targetId';
       final success = await _webSocketClient.connect(url);
 
       if (success) {
@@ -377,34 +373,12 @@ class _ControllerScreenState extends State<ControllerScreen> {
   }
 
   Future<void> _connectToDevice() async {
-    final ip = _ipController.text.trim();
-    final portStr = _portController.text.trim();
+    final targetId = _deviceIdController.text.trim();
 
-    if (ip.isEmpty) {
+    if (targetId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('请输入IP地址'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (portStr.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('请输入端口号'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final port = int.tryParse(portStr);
-    if (port == null || port < 1 || port > 65535) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('端口号无效'),
+          content: Text('请输入被控端设备ID'),
           backgroundColor: Colors.red,
         ),
       );
@@ -415,7 +389,7 @@ class _ControllerScreenState extends State<ControllerScreen> {
       _isConnecting = true;
     });
 
-    final url = NetworkUtils.buildWebSocketUrl(ip, port);
+    final url = '$_serverUrl/?role=client&target=$targetId';
     final success = await _webSocketClient.connect(url);
 
     setState(() {
@@ -487,8 +461,7 @@ class _ControllerScreenState extends State<ControllerScreen> {
     _messageSubscription?.cancel();
     _connectionSubscription?.cancel();
     _webSocketClient.dispose();
-    _ipController.dispose();
-    _portController.dispose();
+    _deviceIdController.dispose();
     super.dispose();
   }
 
@@ -524,11 +497,11 @@ class _ControllerScreenState extends State<ControllerScreen> {
                         ),
                         const SizedBox(height: 16),
                         TextField(
-                          controller: _ipController,
+                          controller: _deviceIdController,
                           decoration: InputDecoration(
-                            labelText: 'IP地址',
-                            hintText: '例如: 192.168.1.100',
-                            prefixIcon: const Icon(Icons.wifi),
+                            labelText: '被控端设备ID',
+                            hintText: '请输入被控端的设备ID',
+                            prefixIcon: const Icon(Icons.fingerprint),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -536,23 +509,14 @@ class _ControllerScreenState extends State<ControllerScreen> {
                             fillColor: Colors.grey[50],
                           ),
                           enabled: !_isConnecting,
-                          keyboardType: TextInputType.number,
                         ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _portController,
-                          decoration: InputDecoration(
-                            labelText: '端口',
-                            hintText: '例如: 8888',
-                            prefixIcon: const Icon(Icons.numbers),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[50],
+                        const SizedBox(height: 8),
+                        Text(
+                          '在另一台手机的"被控端"界面获取设备ID',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
                           ),
-                          enabled: !_isConnecting,
-                          keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
@@ -611,14 +575,10 @@ class _ControllerScreenState extends State<ControllerScreen> {
             right: 0,
             bottom: 0,
             child: Container(
-              height: 64,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.75),
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
+              height: 56,
+              color: Colors.black.withOpacity(0.85),
               child: SafeArea(
+                top: false,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -634,7 +594,7 @@ class _ControllerScreenState extends State<ControllerScreen> {
                     ),
                     _buildNavButton(
                       icon: Icons.recent_actors,
-                      label: '最近任务',
+                      label: '最近',
                       onTap: () => _sendKeyCommand('RECENT'),
                     ),
                   ],
@@ -661,7 +621,7 @@ class _ControllerScreenState extends State<ControllerScreen> {
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
             Text(
-              '正在连接到 ${_ipController.text}:${_portController.text}...',
+              '正在连接到 ${_deviceIdController.text}...',
               style: TextStyle(
                 color: Colors.grey[600],
               ),
@@ -715,7 +675,7 @@ class _ControllerScreenState extends State<ControllerScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '已连接: ${_ipController.text}:${_portController.text}',
+                  '已连接: ${_deviceIdController.text}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.white,
@@ -740,9 +700,10 @@ class _ControllerScreenState extends State<ControllerScreen> {
             ],
           ),
         ),
-        // 视频区域：直接 match_parent，全屏显示
+        // 视频区域：直接 match_parent，全屏显示（底部留56像素给导航栏）
         Expanded(
           child: Container(
+            margin: const EdgeInsets.only(bottom: 56),
             color: Colors.black,
             child: TouchableScreenViewer(
               imageData: _screenData,
@@ -756,8 +717,10 @@ class _ControllerScreenState extends State<ControllerScreen> {
         ),
         // 底部轻提示（半透明覆盖）
         Container(
+          height: 32,
+          margin: const EdgeInsets.only(bottom: 56),
           color: Colors.black.withOpacity(0.3),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          alignment: Alignment.center,
           child: Text(
             _screenData != null ? '直接在画面上点击/滑动进行控制' : '等待屏幕数据...',
             style: const TextStyle(
@@ -779,15 +742,15 @@ class _ControllerScreenState extends State<ControllerScreen> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: Colors.white, size: 24),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
               ),
