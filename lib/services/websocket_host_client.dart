@@ -55,13 +55,13 @@ class WebSocketHostClient {
 
       _connectionStateController.add(WebSocketConnectionState.connecting);
 
-      // 构建连接URL: ws://server/?role=host&id=123456
       final url = '$_serverUrl/?role=host&id=$_deviceCode';
       print('WebSocketHostClient: 连接到 $url');
 
       _channel = WebSocketChannel.connect(Uri.parse(url));
 
-      // 监听消息
+      final completer = Completer<bool>();
+
       _channel!.stream.listen(
         (message) {
           _handleMessage(message);
@@ -76,16 +76,19 @@ class WebSocketHostClient {
         },
       );
 
-      // 服务器模式下，连接建立即表示成功，无需等待握手
-      _isConnected = true;
-      _reconnectAttempts = 0;
-      _connectionStateController.add(WebSocketConnectionState.connected);
+      await Future.delayed(const Duration(milliseconds: 500));
 
-      // 启动心跳
-      _startHeartbeat();
-
-      print('WebSocketHostClient: 连接成功');
-      return true;
+      if (_channel != null) {
+        _isConnected = true;
+        _reconnectAttempts = 0;
+        _connectionStateController.add(WebSocketConnectionState.connected);
+        _startHeartbeat();
+        print('WebSocketHostClient: 连接成功');
+        return true;
+      } else {
+        _connectionStateController.add(WebSocketConnectionState.disconnected);
+        return false;
+      }
     } catch (e) {
       print('WebSocketHostClient 连接失败: $e');
       _connectionStateController.add(WebSocketConnectionState.disconnected);

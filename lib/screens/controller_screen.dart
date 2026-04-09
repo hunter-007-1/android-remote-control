@@ -399,7 +399,7 @@ class _ControllerScreenState extends State<ControllerScreen> {
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('连接失败，请检查IP和端口'),
+          content: Text('连接失败，请检查设备ID是否正确'),
           backgroundColor: Colors.red,
         ),
       );

@@ -10,7 +10,6 @@ class WebSocketClient {
   WebSocketChannel? _channel;
   bool _isConnected = false;
   String? _url;
-  Completer<bool>? _handshakeCompleter;
 
   final StreamController<Message> _messageController =
       StreamController<Message>.broadcast();
@@ -47,7 +46,6 @@ class WebSocketClient {
       _connectionStateController.add(WebSocketConnectionState.connecting);
       _channel = WebSocketChannel.connect(Uri.parse(_url!));
 
-      // 监听消息
       _channel!.stream.listen(
         (message) {
           _handleMessage(message);
@@ -62,25 +60,19 @@ class WebSocketClient {
         },
       );
 
-      // 等待服务端握手（MessageType.connected）
-      _handshakeCompleter = Completer<bool>();
-      final ok = await _handshakeCompleter!.future
-          .timeout(const Duration(seconds: 5), onTimeout: () => false);
+      await Future.delayed(const Duration(milliseconds: 500));
 
-      if (!ok) {
-        await disconnect();
+      if (_channel != null) {
+        _isConnected = true;
+        _reconnectAttempts = 0;
+        _connectionStateController.add(WebSocketConnectionState.connected);
+        _startHeartbeat();
+        print('WebSocket 连接成功: $_url');
+        return true;
+      } else {
+        _connectionStateController.add(WebSocketConnectionState.disconnected);
         return false;
       }
-
-      _isConnected = true;
-      _reconnectAttempts = 0;
-      _connectionStateController.add(WebSocketConnectionState.connected);
-
-      // 启动心跳
-      _startHeartbeat();
-
-      print('WebSocket 连接成功: $_url');
-      return true;
     } catch (e) {
       print('连接失败: $e');
       _connectionStateController.add(WebSocketConnectionState.disconnected);
@@ -101,11 +93,6 @@ class WebSocketClient {
           _pendingMetadata = json;
         } else {
           final msg = Message.fromJson(json);
-          // 握手：确认服务端已接入
-          if (msg.type == MessageType.connected) {
-            _handshakeCompleter?.complete(true);
-            _handshakeCompleter = null;
-          }
           _messageController.add(msg);
         }
       } else if (message is Uint8List) {
@@ -205,7 +192,6 @@ class WebSocketClient {
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
     _heartbeatTimer?.cancel();
-    _handshakeCompleter = null;
 
     await _channel?.sink.close();
     _channel = null;
