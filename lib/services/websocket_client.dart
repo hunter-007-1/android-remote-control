@@ -105,6 +105,13 @@ class WebSocketClient {
           );
           _pendingMetadata = null;
           _messageController.add(msg);
+        } else {
+          // 没有元数据，直接作为屏幕帧（fallback）
+          final msg = Message(
+            type: MessageType.screenFrame,
+            binaryData: message,
+          );
+          _messageController.add(msg);
         }
       }
     } catch (e) {
