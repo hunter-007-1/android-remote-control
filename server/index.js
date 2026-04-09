@@ -65,6 +65,7 @@ wss.on('connection', (ws, req) => {
 });
 
 setInterval(() => {
+  console.log(`当前在线: 被控端=${hosts.size}, 控制端=${clients.size}`);
   for (const [id, ws] of hosts) {
     if (ws.readyState !== WebSocket.OPEN) {
       hosts.delete(id);

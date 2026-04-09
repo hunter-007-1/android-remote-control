@@ -76,7 +76,9 @@ class _ControlledScreenState extends State<ControlledScreen> {
         _isStarting = true;
       });
 
-      final success = await _remoteControlService.start();
+      final provider = Provider.of<AppStateProvider>(context, listen: false);
+      final success =
+          await _remoteControlService.start(deviceId: provider.deviceId);
 
       setState(() {
         _isStarting = false;
