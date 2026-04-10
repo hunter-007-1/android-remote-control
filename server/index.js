@@ -1,7 +1,26 @@
+const http = require('http');
 const WebSocket = require('ws');
 
 const port = process.env.PORT || 8080;
-const wss = new WebSocket.Server({ port: port });
+
+// HTTP服务器用于健康检查
+const server = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      status: 'ok', 
+      connections: { hosts: hosts.size, clients: clients.size } 
+    }));
+  } else if (req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('WebSocket Server Running');
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not Found');
+  }
+});
+
+const wss = new WebSocket.Server({ server });
 
 const hosts = new Map();
 const clients = new Map();
@@ -93,5 +112,10 @@ setInterval(() => {
     }
   }
 }, 5000);
+
+server.listen(port, '0.0.0.0', () => {
+  console.log('HTTP服务器监听在端口 ' + port);
+  console.log('健康检查: /health');
+});
 
 console.log('等待连接...');
