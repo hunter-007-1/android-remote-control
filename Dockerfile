@@ -7,6 +7,8 @@ RUN npm install
 
 COPY server/index.js ./
 
+ENV PORT=8080
+
 EXPOSE 8080
 
 CMD ["node", "index.js"]
