@@ -185,6 +185,8 @@ class _ControllerScreenState extends State<ControllerScreen> {
   void _handleMessage(Message message) {
     switch (message.type) {
       case MessageType.screenFrame:
+        print(
+            'ControllerScreen: 收到第 $_framesReceived 帧, 大小: ${message.binaryData?.length ?? 0} bytes');
         setState(() {
           _screenData = message.binaryData;
           _framesReceived++;

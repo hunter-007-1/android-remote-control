@@ -97,6 +97,7 @@ class WebSocketClient {
         }
       } else if (message is Uint8List) {
         // 二进制数据（屏幕帧）
+        print('WebSocketClient: 收到二进制数据 ${message.length} bytes');
         if (_pendingMetadata != null) {
           final msg = Message(
             type: MessageType.screenFrame,
@@ -112,6 +113,7 @@ class WebSocketClient {
             binaryData: message,
           );
           _messageController.add(msg);
+          print('WebSocketClient: 作为屏幕帧处理，大小: ${message.length} bytes');
         }
       }
     } catch (e) {

@@ -167,12 +167,14 @@ class WebSocketHostClient {
   /// 发送屏幕帧（直接发送 Binary，不加 JSON 包装）
   Future<bool> sendScreenFrame(Uint8List imageData) async {
     if (!_isConnected || _channel == null) {
+      print('WebSocketHostClient: 无法发送，连接未建立');
       return false;
     }
 
     try {
       // 直接发送二进制数据，服务器会透传给控制端
       _channel!.sink.add(imageData);
+      print('WebSocketHostClient: 发送屏幕帧 ${imageData.length} bytes');
       return true;
     } catch (e) {
       print('WebSocketHostClient 发送屏幕帧失败: $e');

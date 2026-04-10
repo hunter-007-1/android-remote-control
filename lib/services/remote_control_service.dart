@@ -80,7 +80,7 @@ class RemoteControlService with ChangeNotifier {
       if (frameStream != null) {
         _screenSubscription = frameStream.listen(
           (frameData) {
-            if (_isRunning && _isConnected) {
+            if (_isRunning && _webSocketClient.isConnected) {
               _sendScreenFrame(frameData);
             }
           },
@@ -109,7 +109,8 @@ class RemoteControlService with ChangeNotifier {
   }
 
   Future<void> _sendScreenFrame(Uint8List frameData) async {
-    if (!_isConnected) {
+    // 直接使用 WebSocketHostClient 的实际连接状态
+    if (!_webSocketClient.isConnected) {
       return;
     }
 
@@ -119,8 +120,12 @@ class RemoteControlService with ChangeNotifier {
 
     _isSendingFrame = true;
     try {
-      await _webSocketClient.sendScreenFrame(frameData);
-      _framesSent++;
+      final success = await _webSocketClient.sendScreenFrame(frameData);
+      if (success) {
+        _framesSent++;
+        print(
+            'RemoteControlService: 已发送第 $_framesSent 帧, 大小: ${frameData.length} bytes');
+      }
     } catch (error) {
       print('发送屏幕帧时出错: $error');
     } finally {
