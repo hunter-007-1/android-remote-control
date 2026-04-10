@@ -29,7 +29,8 @@ class _ControllerScreenState extends State<ControllerScreen> {
       ws.WebSocketConnectionState.disconnected;
   int _framesReceived = 0;
 
-  String get _serverUrl => 'wss://invigorating-embrace.up.railway.app:443';
+  String get _serverUrl =>
+      'wss://android-remote-control-production.up.railway.app';
 
   // 视频流中断检测
   Timer? _frameTimeoutTimer;
