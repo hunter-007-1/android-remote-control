@@ -3,7 +3,7 @@
 # But include server folder
 !server/
 !server/**
-# And root package.json for Node.js
+# And root files needed for build
 !package.json
 !railway.json
 !package-lock.json

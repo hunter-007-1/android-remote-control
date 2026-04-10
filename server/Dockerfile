@@ -1,11 +1,11 @@
-FROM node:18-alpine
+FROM node:18-slim
 
 WORKDIR /app
 
-COPY server/package.json ./
-RUN npm install
+COPY package*.json ./
+RUN npm ci --production
 
-COPY server/index.js ./
+COPY index.js ./
 
 EXPOSE 8080
 
