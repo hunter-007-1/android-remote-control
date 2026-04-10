@@ -5,6 +5,9 @@ const port = process.env.PORT || 8080;
 
 // HTTP服务器用于健康检查
 const server = http.createServer((req, res) => {
+  // 设置CORS头
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ 
@@ -13,7 +16,11 @@ const server = http.createServer((req, res) => {
     }));
   } else if (req.url === '/') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('WebSocket Server Running');
+    res.end('WebSocket Server Running - Remote Control');
+  } else if (req.url === '/ws') {
+    // WebSocket升级请求
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    res.end('Use WebSocket protocol to connect');
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Not Found');
