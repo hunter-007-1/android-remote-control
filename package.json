@@ -1,0 +1,15 @@
+{
+  "name": "remote-control-server",
+  "version": "1.0.0",
+  "description": "WebSocket relay server for remote control",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
