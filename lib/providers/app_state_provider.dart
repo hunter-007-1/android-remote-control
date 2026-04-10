@@ -17,11 +17,14 @@ class AppStateProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       String? savedDeviceId = prefs.getString('device_id');
 
-      if (savedDeviceId == null || savedDeviceId.isEmpty) {
+      if (savedDeviceId == null ||
+          savedDeviceId.isEmpty ||
+          savedDeviceId.length > 10) {
         final random = DateTime.now().millisecondsSinceEpoch;
         final deviceNum = (random % 900000) + 100000;
         savedDeviceId = deviceNum.toString();
         await prefs.setString('device_id', savedDeviceId);
+        print('Generated new 6-digit device ID: $savedDeviceId');
       }
 
       _deviceId = savedDeviceId;

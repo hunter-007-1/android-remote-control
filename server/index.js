@@ -1,11 +1,12 @@
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: 8080 });
+const port = process.env.PORT || 8080;
+const wss = new WebSocket.Server({ port: port });
 
 const hosts = new Map();
 const clients = new Map();
 
-console.log('WebSocket 中转服务器启动，端口: 8080');
+console.log('WebSocket 中转服务器启动，端口: ' + port);
 
 wss.on('connection', (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
