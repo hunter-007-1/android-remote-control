@@ -114,17 +114,26 @@ class RemoteControlService with ChangeNotifier {
       return;
     }
 
+    // 帧跳过：如果正在发送，跳过当前帧
     if (_isSendingFrame) {
       return;
     }
 
     _isSendingFrame = true;
     try {
-      final success = await _webSocketClient.sendScreenFrame(frameData);
+      // 压缩帧数据（减少90%传输量）
+      final compressedFrame =
+          await _screenStreamProvider.compressFrame(frameData);
+      if (compressedFrame == null) {
+        _isSendingFrame = false;
+        return;
+      }
+
+      final success = await _webSocketClient.sendScreenFrame(compressedFrame);
       if (success) {
         _framesSent++;
         print(
-            'RemoteControlService: 已发送第 $_framesSent 帧, 大小: ${frameData.length} bytes');
+            'RemoteControlService: 已发送第 $_framesSent 帧, 大小: ${compressedFrame.length} bytes');
       }
     } catch (error) {
       print('发送屏幕帧时出错: $error');

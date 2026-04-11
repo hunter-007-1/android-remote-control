@@ -27,32 +27,35 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(
-          _titles[_currentIndex],
-          textAlign: TextAlign.center,
-        ),
-        centerTitle: true,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(context).openDrawer(),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: AppBar(
+          title: Text(
+            _titles[_currentIndex],
+            textAlign: TextAlign.center,
           ),
-        ),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.blue.shade600,
-                Colors.blue.shade400,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+          centerTitle: true,
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white),
+              onPressed: () => Scaffold.of(context).openDrawer(),
             ),
           ),
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.blue.shade600,
+                  Colors.blue.shade400,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
         ),
-        elevation: 0,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
       drawer: _buildDrawer(),
       body: _screens[_currentIndex],

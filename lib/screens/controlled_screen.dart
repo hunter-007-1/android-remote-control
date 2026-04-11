@@ -155,12 +155,15 @@ class _ControlledScreenState extends State<ControlledScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<AppStateProvider>(context);
     final deviceId = provider.deviceId;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 留出屏幕顶部约1/4的空间
+          SizedBox(height: screenHeight * 0.15),
           Card(
             elevation: 2,
             child: Padding(

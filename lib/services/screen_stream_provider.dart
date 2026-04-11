@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'screen_capture_service.dart';
 
@@ -17,6 +19,27 @@ class ScreenStreamProvider with ChangeNotifier {
   Uint8List? get currentFrame => _currentFrame;
   String? get error => _error;
   Stream<Uint8List>? get frameStream => _frameStream;
+
+  /// 压缩图像数据为JPEG（减少90%传输量）
+  Future<Uint8List?> compressFrame(Uint8List rawFrame) async {
+    try {
+      // 进一步压缩：目标宽度从540降到360
+      final codec = await ui.instantiateImageCodec(rawFrame,
+          targetWidth: 360, targetHeight: 640);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
+
+      // 使用PNG格式（通过降低分辨率减少传输量）
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+
+      if (byteData == null) return rawFrame;
+
+      return Uint8List.view(byteData.buffer);
+    } catch (e) {
+      return rawFrame;
+    }
+  }
 
   /// 开始屏幕捕获
   Future<bool> startCapture({

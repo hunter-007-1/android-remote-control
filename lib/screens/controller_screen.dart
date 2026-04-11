@@ -482,6 +482,8 @@ class _ControllerScreenState extends State<ControllerScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // 留出屏幕顶部约1/4的空间
+              SizedBox(height: MediaQuery.of(context).size.height * 0.15),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Card(
